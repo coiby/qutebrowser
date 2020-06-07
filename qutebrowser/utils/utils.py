@@ -42,7 +42,7 @@ import ctypes.util
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QColor, QClipboard, QDesktopServices
 from PyQt5.QtWidgets import QApplication
-import pkg_resources
+import importlib_resources
 import yaml
 try:
     from yaml import (CSafeLoader as YamlLoader,
@@ -152,10 +152,11 @@ def compact_text(text: str, elidelength: int = None) -> str:
 def preload_resources() -> None:
     """Load resource files into the cache."""
     for subdir, pattern in [('html', '*.html'), ('javascript', '*.js')]:
-        path = resource_filename(subdir)
-        for full_path in glob.glob(os.path.join(path, pattern)):
-            sub_path = '/'.join([subdir, os.path.basename(full_path)])
-            _resource_cache[sub_path] = read_file(sub_path)
+
+        with importlib_resources.as_file(resource_filename(subdir)) as path:
+            for full_path in glob.glob(os.path.join(path, pattern)):
+                sub_path = '/'.join([subdir, os.path.basename(full_path)])
+                _resource_cache[sub_path] = read_file(sub_path)
 
 
 # FIXME:typing Return value should be bytes/str
@@ -187,8 +188,8 @@ def read_file(filename: str, binary: bool = False) -> typing.Any:
             with open(fn, 'r', encoding='utf-8') as f:
                 return f.read()
     else:
-        data = pkg_resources.resource_string(
-            qutebrowser.__name__, filename)
+        f = importlib_resources.files(qutebrowser.__name__).joinpath(filename)
+        data = f.read_bytes()
 
         if binary:
             return data
@@ -207,7 +208,8 @@ def resource_filename(filename: str) -> str:
     """
     if hasattr(sys, 'frozen'):
         return os.path.join(os.path.dirname(sys.executable), filename)
-    return pkg_resources.resource_filename(qutebrowser.__name__, filename)
+    ref = importlib_resources.files(qutebrowser.__name__) / filename
+    return ref
 
 
 def _get_color_percentage(a_c1: int, a_c2: int, a_c3:

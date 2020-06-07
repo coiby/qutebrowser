@@ -34,7 +34,7 @@ import typing
 import functools
 
 import attr
-import pkg_resources
+from packaging.version import parse as parse_version
 from PyQt5.QtCore import PYQT_VERSION_STR, QLibraryInfo
 from PyQt5.QtNetwork import QSslSocket
 from PyQt5.QtGui import (QOpenGLContext, QOpenGLVersionProfile,
@@ -104,7 +104,7 @@ def distribution() -> typing.Optional[DistributionInfo]:
     assert pretty is not None
 
     if 'VERSION_ID' in info:
-        dist_version = pkg_resources.parse_version(
+        dist_version = parse_version(
             info['VERSION_ID']
         )  # type: typing.Optional[typing.Tuple[str, ...]]
     else:
